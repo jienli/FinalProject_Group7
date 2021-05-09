@@ -69,8 +69,113 @@ object main{
       println("Current Iteration = " + iteration + ". Remaining vertices = " + remaining_vertices + ". test: " + test)
       println("************************************************************")
     }
-    return g.edges.filter({case x => (x.attr == 1)})
+
+    val g_aug = augmentation(g.mapVertices((id, vd) => vd._1.asInstanceOf[Int]))
+
+    return g_aug.edges.filter({case x => (x.attr == 1)})
   }
+
+
+
+
+
+
+
+
+  // ED.attr (1=M, 0 = not M)
+  // VD.attr (not in use)
+  def augmentation(g_in: Graph[Int, Int]): Graph[Int, Int] = {
+    println("\n\n================================================================")
+    println("Starting Length 3 Augmentation ")
+    println("================================================================")
+    val r = scala.util.Random
+    // var g:Graph[Int,Int] = g_in.mapVertices((id, vd) => (r.nextInt(4) + 1))          // don't know how or why to use this 1234 mapping
+    val v = g_in.aggregateMessages[(Int)](
+        e => {
+          e.sendToDst(e.attr);
+          e.sendToSrc(e.attr)
+        },
+        (msg1, msg2) => msg1 | msg2
+      ) //Map ED attr to: 1 = M, 0 = not in M
+    var g = Graph(v, g_in.edges) 
+
+    var iteration = 0
+
+    var matchedCount = 0.asInstanceOf[Long]
+    var new_matchedCount = g.edges.filter({case x => (x.attr == 1)}).count().asInstanceOf[Long]
+    var notProgressingStreak = 0
+    while(notProgressingStreak < 2){
+
+      // (In M?, self ID, random number)
+      val v2 = g.aggregateMessages[(Int, Long, Float)](
+        e => {
+          e.sendToDst(if(e.srcAttr == 1 && e.dstAttr == 0) (e.dstAttr, e.srcId, r.nextFloat()) else (e.dstAttr, e.srcId, -1) );
+          e.sendToSrc(if(e.dstAttr == 1 && e.srcAttr == 0) (e.srcAttr, e.dstId, r.nextFloat()) else (e.srcAttr, e.dstId, -1) )
+        },
+        (msg1, msg2) => if (msg1._3 > msg2._3) msg1 else msg2
+      ) //from 2 3 to 1 4, fro them to select one to propose; 1,4 select one 
+      val g2 = Graph(v2, g.edges) 
+
+      val v3 = g2.aggregateMessages[(Int, Long, Float)](
+        e => {
+          e.sendToDst(if(e.srcAttr._3 > 0 && e.srcAttr._2 == e.dstId) (e.dstAttr._1, e.srcId, r.nextFloat()) else e.dstAttr );
+          e.sendToSrc(if(e.dstAttr._3 > 0 && e.dstAttr._2 == e.srcId) (e.srcAttr._1, e.dstId, r.nextFloat()) else e.srcAttr )
+        },
+        (msg1, msg2) => if (msg1._3 > msg2._3) msg1 else msg2
+      ) //from 1 4 to 2 3, propose; 2,3 select one to accept
+      val g3 = Graph(v3, g2.edges) 
+
+      val v4 = g3.aggregateMessages[(Int, Long, Float)](
+        e => {
+          // e.sendToDst(if(e.attr == 1 && e.srcAttr._3 > 0 && e.dstAttr._3 > 0) e.dstAttr else (e.dstAttr._1, e.dstAttr._2, -1) );
+          // e.sendToSrc(if(e.attr == 1 && e.srcAttr._3 > 0 && e.dstAttr._3 > 0) e.srcAttr else (e.srcAttr._1, e.srcAttr._2, -1) )
+          e.sendToDst(if(e.attr == 1 && (e.srcAttr._3 < 0 || e.dstAttr._3 < 0)) (e.dstAttr._1, e.dstAttr._2, -1) else e.dstAttr );
+          e.sendToSrc(if(e.attr == 1 && (e.srcAttr._3 < 0 || e.dstAttr._3 < 0)) (e.srcAttr._1, e.srcAttr._2, -1) else e.srcAttr )
+        },
+        (msg1, msg2) => if (msg1._3 < msg2._3) msg1 else msg2
+      ) //from 2 to 3 and 3 to 2, exchange info see if both are proposed to; 
+      val g4 = Graph(v4, g3.edges) 
+
+      val g5 = g4.mapTriplets(t => 
+          if (t.srcAttr._3 > 0 && t.dstAttr._3 > 0 && t.srcAttr._2 == t.dstId && t.dstAttr._2 == t.srcId) 
+            1
+          // if (t.srcAttr._3 > 0 && t.dstAttr._3 > 0 && t.srcAttr._2 == t.dstId && t.dstAttr._2 == t.srcId) 
+          //   2
+          else if (t.srcAttr._3 > 0 && t.dstAttr._3 > 0 && t.attr == 1)
+            0
+          else 
+            t.attr
+        )
+      // Edges are now all up to date. need to uodate vertices attr based on edge attr
+
+      val v_new = g5.aggregateMessages[(Int)](
+        e => {
+          e.sendToDst(e.attr);
+          e.sendToSrc(e.attr)
+        },
+        (msg1, msg2) => msg1 | msg2
+      ) //Map ED attr to: 1 = M, 0 = not in M
+      g = Graph(v_new, g5.edges) 
+      g.cache()
+
+      iteration += 1
+      matchedCount = new_matchedCount
+      new_matchedCount = g.edges.filter({case x => (x.attr == 1)}).count()
+      val new_matchedCount2 = g.edges.filter({case x => (x.attr == 2)}).count()
+      println("************************************************************")
+      println("Current Iteration = " + iteration + ". # matches: " + new_matchedCount+ ". # matches2: " + new_matchedCount2)
+      println("************************************************************")
+
+      if ((new_matchedCount - matchedCount).asInstanceOf[Float] / new_matchedCount.asInstanceOf[Float] < 0.02) {
+        notProgressingStreak += 1
+      } else {
+        notProgressingStreak = 0
+      }
+    }
+
+    return g
+  }
+  
 
       // // Uniform Random Propose Version
       // g = g.mapVertices((id, vd) => (vd._1))
@@ -149,7 +254,7 @@ object main{
       val endTimeMillis = System.currentTimeMillis()
       val durationSeconds = (endTimeMillis - startTimeMillis) / 1000
       println("==================================")
-      println("Israeli-Itai's algorithm completed in " + durationSeconds + "s.")
+      println("Israeli-Itai's algorithm (& 3-Augmentation) completed in " + durationSeconds + "s.")
       println("==================================")
 
       val g2df = spark.createDataFrame(g2) //g2.vertices
@@ -179,3 +284,46 @@ object main{
   }
 }
 
+
+/*
+spark-submit --class "final_project.main" --master "local[*]" target/scala-2.12/project_3_2.12-1.0.jar compute  data/log_normal_100.csv data/log_normal_100_matching.csv
+
+spark-submit --master "local[*]" --class "final_project.verifier" target/scala-2.12/project_3_2.12-1.0.jar data/log_normal_100.csv data/log_normal_100_matching.csv
+48
+
+
+
+spark-submit --class "final_project.main" --master "local[*]" target/scala-2.12/project_3_2.12-1.0.jar compute  data/musae_ENGB_edges.csv data/musae_ENGB_edges_matching.csv
+
+spark-submit --master "local[*]" --class "final_project.verifier" target/scala-2.12/project_3_2.12-1.0.jar data/musae_ENGB_edges.csv data/musae_ENGB_edges_matching.csv
+The matched edges form a matching of size: 2350
+
+
+
+spark-submit --class "final_project.main" --driver-memory 12g --master "local[*]" target/scala-2.12/project_3_2.12-1.0.jar compute  data/soc-pokec-relationships.csv data/soc-pokec-relationships_matching.csv
+
+spark-submit --master "local[*]" --class "final_project.verifier" target/scala-2.12/project_3_2.12-1.0.jar data/soc-pokec-relationships.csv data/soc-pokec-relationships_matching.csv
+The matched edges form a matching of size: 644194
+
+
+
+
+spark-submit --class "final_project.main" --driver-memory 12g  --master "local[*]" target/scala-2.12/project_3_2.12-1.0.jar compute  data/soc-LiveJournal1.csv data/soc-LiveJournal1_matching.csv
+
+spark-submit --master "local[*]" --class "final_project.verifier" target/scala-2.12/project_3_2.12-1.0.jar data/soc-LiveJournal1.csv data/soc-LiveJournal1_matching.csv
+
+
+
+
+spark-submit --class "final_project.main" --driver-memory 12g --master "local[*]" target/scala-2.12/project_3_2.12-1.0.jar compute  data/twitter_original_edges.csv data/twitter_original_edges_matching.csv
+
+spark-submit --master "local[*]" --class "final_project.verifier" target/scala-2.12/project_3_2.12-1.0.jar data/twitter_original_edges.csv data/twitter_original_edges_matching.csv
+
+
+
+
+spark-submit --class "final_project.main" --driver-memory 12g  --master "local[*]" target/scala-2.12/project_3_2.12-1.0.jar compute  data/com-orkut.ungraph.csv data/com-orkut.ungraph.csv
+
+spark-submit --master "local[*]" --class "final_project.verifier" target/scala-2.12/project_3_2.12-1.0.jar data/com-orkut.
+
+*/

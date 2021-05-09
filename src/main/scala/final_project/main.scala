@@ -29,7 +29,7 @@ object main{
       iteration += 1
       // g = g.mapVertices((id, vd) => (vd._1, r.nextFloat()))
       //propose
-      val v = g.aggregateMessages[(Long, Float)](
+      var v = g.aggregateMessages[(Long, Float)](
         e => { 
           e.sendToDst(if (e.srcAttr._1 == 1 && e.dstAttr._1 == 1) (e.srcId, r.nextFloat()) else (-1,0)); //(ID,random)
           e.sendToSrc(if (e.dstAttr._1 == 1 && e.srcAttr._1 == 1) (e.dstId, r.nextFloat()) else (-1,0)) 
@@ -37,10 +37,10 @@ object main{
         (msg1, msg2) => if (msg1._2 > msg2._2) msg1 else msg2
       ) //propose to v with max random value
 
-      var g2 = Graph(v, g.edges)
-      g2 = g2.mapVertices((id, vd) => (vd._1, if (r.nextInt()%2 == 0) 0 else 1 )) //(proposed vertex id, 0/1)
+      g = Graph(v, g.edges)
+      g = g.mapVertices((id, vd) => (vd._1, if (r.nextInt()%2 == 0) 0 else 1 )) //(proposed vertex id, 0/1)
       
-      val v2 = g2.aggregateMessages[(Long, Float)](
+      v = g.aggregateMessages[(Long, Float)](
         e => {
           e.sendToDst(if(e.dstId == e.srcAttr._1 && e.srcAttr._2 == 0 && e.dstAttr._2 == 1) (e.srcId,0) else (-1,0));
           e.sendToSrc(if(e.srcId == e.dstAttr._1 && e.dstAttr._2 == 0 && e.srcAttr._2 == 1) (e.dstId,0) else (-1,0))
@@ -48,11 +48,11 @@ object main{
         (msg1, msg2) => if (msg1._1 > msg2._1) msg1 else msg2 // accept propsal from v with max id
       )
       
-      var g3 = Graph(v2, g.edges)
-      g3 = g3.mapTriplets(t => if( t.attr == 1 || t.srcId == t.dstAttr._1 || t.dstId == t.srcAttr._1) 1 else 0)
+      g = Graph(v, g.edges)
+      g = g.mapTriplets(t => if( t.attr == 1 || t.srcId == t.dstAttr._1 || t.dstId == t.srcAttr._1) 1 else 0)
 
-      var g4:Graph[(Long,Float),Int]  = Graph(g.vertices, g3.edges)
-      val v3 = g4.aggregateMessages[(Long, Float)](
+      g = Graph(g.vertices, g.edges)
+      v = g.aggregateMessages[(Long, Float)](
         e => {
           e.sendToDst(if(e.attr == 1) (0,0) else (e.dstAttr._1, 0) );
           e.sendToSrc(if(e.attr == 1) (0,0) else (e.srcAttr._1, 0) )
@@ -60,7 +60,7 @@ object main{
         (msg1, msg2) => if (msg1._1 == 0 || msg2._1 == 0) (0,0) else (1,0)
       ) //0=deactivate
 
-      g = Graph(v3, g4.edges) 
+      g = Graph(v, g.edges) 
       g.cache()
       remaining_vertices = new_remaining
       var test = g.edges.filter({case x => (x.attr == 1)}).count()
@@ -70,9 +70,8 @@ object main{
       println("************************************************************")
     }
 
-    val g_aug = augmentation(g.mapVertices((id, vd) => vd._1.asInstanceOf[Int]))
 
-    return g_aug.edges.filter({case x => (x.attr == 1)})
+    return augmentation(g.mapVertices((id, vd) => vd._1.asInstanceOf[Int]))
   }
 
 
@@ -84,18 +83,18 @@ object main{
 
   // ED.attr (1=M, 0 = not M)
   // VD.attr (not in use)
-  def augmentation(g_in: Graph[Int, Int]): Graph[Int, Int] = {
+  def augmentation(g_in: Graph[Int, Int]): RDD[Edge[Int]] = {
     println("\n\n================================================================")
     println("Starting Length 3 Augmentation ")
     println("================================================================")
     val r = scala.util.Random
     // var g:Graph[Int,Int] = g_in.mapVertices((id, vd) => (r.nextInt(4) + 1))          // don't know how or why to use this 1234 mapping
-    val v = g_in.aggregateMessages[(Int)](
+    var v = g_in.aggregateMessages[(Int, Long, Float)](
         e => {
-          e.sendToDst(e.attr);
-          e.sendToSrc(e.attr)
+          e.sendToDst((e.attr, 0, 0));
+          e.sendToSrc((e.attr, 0, 0))
         },
-        (msg1, msg2) => msg1 | msg2
+        (msg1, msg2) => (msg1._1 | msg2._1, 0, 0)
       ) //Map ED attr to: 1 = M, 0 = not in M
     var g = Graph(v, g_in.edges) 
 
@@ -107,25 +106,25 @@ object main{
     while(notProgressingStreak < 2){
 
       // (In M?, self ID, random number)
-      val v2 = g.aggregateMessages[(Int, Long, Float)](
+      v = g.aggregateMessages[(Int, Long, Float)](
         e => {
-          e.sendToDst(if(e.srcAttr == 1 && e.dstAttr == 0) (e.dstAttr, e.srcId, r.nextFloat()) else (e.dstAttr, e.srcId, -1) );
-          e.sendToSrc(if(e.dstAttr == 1 && e.srcAttr == 0) (e.srcAttr, e.dstId, r.nextFloat()) else (e.srcAttr, e.dstId, -1) )
+          e.sendToDst(if(e.srcAttr._1 == 1 && e.dstAttr._1 == 0) (e.dstAttr._1, e.srcId, r.nextFloat()) else (e.dstAttr._1, e.srcId, -1) );
+          e.sendToSrc(if(e.dstAttr._1 == 1 && e.srcAttr._1 == 0) (e.srcAttr._1, e.dstId, r.nextFloat()) else (e.srcAttr._1, e.dstId, -1) )
         },
         (msg1, msg2) => if (msg1._3 > msg2._3) msg1 else msg2
       ) //from 2 3 to 1 4, fro them to select one to propose; 1,4 select one 
-      val g2 = Graph(v2, g.edges) 
+      g = Graph(v, g.edges) 
 
-      val v3 = g2.aggregateMessages[(Int, Long, Float)](
+      v = g.aggregateMessages[(Int, Long, Float)](
         e => {
           e.sendToDst(if(e.srcAttr._3 > 0 && e.srcAttr._2 == e.dstId) (e.dstAttr._1, e.srcId, r.nextFloat()) else e.dstAttr );
           e.sendToSrc(if(e.dstAttr._3 > 0 && e.dstAttr._2 == e.srcId) (e.srcAttr._1, e.dstId, r.nextFloat()) else e.srcAttr )
         },
         (msg1, msg2) => if (msg1._3 > msg2._3) msg1 else msg2
       ) //from 1 4 to 2 3, propose; 2,3 select one to accept
-      val g3 = Graph(v3, g2.edges) 
+      g = Graph(v, g.edges) 
 
-      val v4 = g3.aggregateMessages[(Int, Long, Float)](
+      v = g.aggregateMessages[(Int, Long, Float)](
         e => {
           // e.sendToDst(if(e.attr == 1 && e.srcAttr._3 > 0 && e.dstAttr._3 > 0) e.dstAttr else (e.dstAttr._1, e.dstAttr._2, -1) );
           // e.sendToSrc(if(e.attr == 1 && e.srcAttr._3 > 0 && e.dstAttr._3 > 0) e.srcAttr else (e.srcAttr._1, e.srcAttr._2, -1) )
@@ -134,9 +133,9 @@ object main{
         },
         (msg1, msg2) => if (msg1._3 < msg2._3) msg1 else msg2
       ) //from 2 to 3 and 3 to 2, exchange info see if both are proposed to; 
-      val g4 = Graph(v4, g3.edges) 
+      g = Graph(v, g.edges) 
 
-      val g5 = g4.mapTriplets(t => 
+      g = g.mapTriplets(t => 
           if (t.srcAttr._3 > 0 && t.dstAttr._3 > 0 && t.srcAttr._2 == t.dstId && t.dstAttr._2 == t.srcId) 
             1
           // if (t.srcAttr._3 > 0 && t.dstAttr._3 > 0 && t.srcAttr._2 == t.dstId && t.dstAttr._2 == t.srcId) 
@@ -148,14 +147,14 @@ object main{
         )
       // Edges are now all up to date. need to uodate vertices attr based on edge attr
 
-      val v_new = g5.aggregateMessages[(Int)](
+      v = g.aggregateMessages[(Int, Long, Float)](
         e => {
-          e.sendToDst(e.attr);
-          e.sendToSrc(e.attr)
+          e.sendToDst((e.attr, 0, 0));
+          e.sendToSrc((e.attr, 0, 0))
         },
-        (msg1, msg2) => msg1 | msg2
+        (msg1, msg2) => (msg1._1 | msg2._1, 0, 0)
       ) //Map ED attr to: 1 = M, 0 = not in M
-      g = Graph(v_new, g5.edges) 
+      g = Graph(v, g.edges) 
       g.cache()
 
       iteration += 1
@@ -172,7 +171,7 @@ object main{
       }
     }
 
-    return g
+    return g.edges.filter({case x => (x.attr == 1)})
   }
   
 

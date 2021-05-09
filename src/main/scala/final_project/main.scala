@@ -161,9 +161,8 @@ object main{
       iteration += 1
       matchedCount = new_matchedCount
       new_matchedCount = g.edges.filter({case x => (x.attr == 1)}).count()
-      val new_matchedCount2 = g.edges.filter({case x => (x.attr == 2)}).count()
       println("************************************************************")
-      println("Current Iteration = " + iteration + ". # matches: " + new_matchedCount+ ". # matches2: " + new_matchedCount2)
+      println("Current Iteration = " + iteration + ". # matches: " + new_matchedCount)
       println("************************************************************")
 
       if ((new_matchedCount - matchedCount).asInstanceOf[Float] / new_matchedCount.asInstanceOf[Float] < 0.02) {

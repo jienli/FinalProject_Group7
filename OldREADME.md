@@ -27,7 +27,5 @@ For the final project, you are provided 6 CSV files, each containing an undirect
   ** Pr(v got deleted) ≥(1−𝑒^(−1/3))/4
 
 
-  * Discussion about the advantages of your algorithm(s). For example, does it guarantee a constraint on the number of shuffling rounds (say `O(log log n)` rounds)? Does it give you an approximation guarantee on the quality of the matching? If your algorithm has such a guarantee, please provide proofs or scholarly references as to why they hold in your report.
-
 
 

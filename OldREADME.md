@@ -1,5 +1,30 @@
-# Large Scale Data Processing: Final Project
-## Graph matching
+Out group is using two-step process to find the matchings in a graph. The first step is the Israeli-Itai algorithm, as discussed in the course, to find a maximal set of matchings in the graph. The second step is a augmentation step that specifically increase the matching size by 1 for every 3-edge augmenting path found.
+
+## Israeli-Itai Algorithm
+The Israeli-Itai Algorithm will find a maximal matching that will have at least 1/2 of number of matching as the maximum matching of the graph. The algorithm is identical as the slide describes and will not be restated here.
+The implementation is composed of 3 aggrefateMesages: Proposal, Acceptance, and Deactivation. Choosing a random neighbor to propose is achieved by each neighbor sending a random number and choosing the largest number as the destination of the proposal. Acceptance of the proposal is just choosing the proposal with the largest id nubmer, since a strictly random selection is not required. The deactivation is simply deactivating vertices based on the status of the edges. (The newly matched edges will be marked through a `mapTriplets()` call)
+
+Each iteration will match a constant fraction of edges in expectation, and the algorithm will be completed in log(n) rounds.
+
+## 3-Edge Augmentation
+An augmenting path can be flipped to increase the total matching size by 1. But finding the augmentitng paths can be complicated and time consuming. Here, we reduce the complexity of the problem by only finding one type of augmenting paths that is composed of 3 edges and 4 vertices. The algorithm is as follows:
+ 1. Each free vertices choose a random neighboring matched vertex to send a proposal
+ 2. Each matched vertecies choose a random proposal to accept
+ 3. If both vertecies of a matched pair have a proposal, flip the augmenting path of 3 edges.
+ 4. Repeat step 1-3 until the matching size is increasing by less than 2% per round.
+Step 1 and 2 garantees that each matched pair and each proposing free vertecies form a 3-edge path that is non-overlapping with other similar 3-edge paths, becasue each proposing free vertecies can only propose to 1 matched vertex and each matched vertices can only accept one proposal. Step 3 joins 2 parts together to a 3-edge path and flip it.
+
+In each iteration, the number of 3-edge augmenting paths found is primarily limited by the probability of 2 free vertecies selecting the correct neighboring matched vertices in step 1. (beause the probability of a matched vertex having multiple proposal in step 2 is actually really small compared to the number of candicates to propose to in step 1) For each potential 3-edge augmenting path, the probability of finding it is roughly equal to the probability of selecting the right neighbors in step 1, and is therefore roughly `(1/d1+1/d2)` with `d1`=degree of free vertex 1 and `d2`=degree of free vertex 2. The sum of `(1/d1+1/d2)` for each potential 3-edge augmenting path is therefore the expected number of new matchings each iteration. Assuming most vertex have roughly equal degrees, and let n be the number of potential 3-edge augmenting paths, the expected number of new matching is therefore `(2n/d)`, which is a constant fraction of the maximum theoretical amount `n`. Therefore, with the algorithm will converge, adn all potential 3-edge augmenting paths will be found. Step 4 limits the number of iterations for better efficiency of computation power.
+
+
+The implementation is composed of 4 `aggregateMessages()` calls and a `mapTriplets()` call. Random selection is again achieven by sending random numbers and selecting the message with the largest number. The implementatoin technique is very similar to that of the Israeli-Itai Algorithm, and please refer to the original code for more detail.
+
+
+The Adventage of our algorithm is that it first garantees a maximal matching and 1/2 of maximum matching, then it garantees to flip most of the 3-edge augmentating paths.
+
+
+# Graph matching Results
+
 For the final project, you are provided 6 CSV files, each containing an undirected graph, which can be found [here](https://drive.google.com/file/d/1khb-PXodUl82htpyWLMGGNrx-IzC55w8/view?usp=sharing). The files are as follows: 
 
 
@@ -11,21 +36,3 @@ For the final project, you are provided 6 CSV files, each containing an undirect
 | soc-pokec-relationships.csv   | 22301964                     | 664398                    | Y                               |   s on a 2 * 16 N1 core CPU in GCP         |  23  | 4|
 | musae_ENGB_edges.csv          | 35324                        | 2452                    | Y                                 | 38s on local           | 13| 23|
 | log_normal_100.csv            | 2671                         | 47                     | Y                                  | 27s on local          | 8  | 1 |
-
-
-## Deliverables
-
-* A project report that includes the following:
-  * A table containing the size of the matching you obtained for each test case. The sizes must correspond to the matchings in your output files.
-  * An estimate of the amount of computation used for each test case. For example, "the program runs for 15 minutes on a 2x4 N1 core CPU in GCP." If you happen to be executing mulitple algorithms on a test case, report the total running time.
-  * Description(s) of your approach(es) for obtaining the matchings. It is possible to use different approaches for different cases. Please describe each of them as well as your general strategy if you were to receive a new test case.
-  * Discussion about the advantages of your algorithm(s). For example, does it guarantee a constraint on the number of shuffling rounds (say `O(log log n)` rounds)? Does it give you an approximation guarantee on the quality of the matching? If your algorithm has such a guarantee, please provide proofs or scholarly references as to why they hold in your report.
-  * Israeli-Itai Algorithm
-  ** O(log⁡ n) rounds 
-  ** Pr(no neighbor proposed to v)≤(1−1/𝑑(𝑣) )^(𝑑(𝑣)/3)≤𝑒^(−1/3)
-  ** Pr(v got proposed) ≥1−𝑒^(−1/3)
-  ** Pr(v got deleted) ≥(1−𝑒^(−1/3))/4
-
-
-
-

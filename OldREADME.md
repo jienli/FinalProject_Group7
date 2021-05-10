@@ -36,8 +36,8 @@ For the final project, you are provided 6 CSV files, each containing an undirect
 |           File name           |        Number of edges |        Matchings Found       |        Passed Verifier?       |     Time             |  Iterations  |  Augmented Iterations |
 | ------------------------------| -------------------| ---------------------------- | ---------------------------- |----------------------------| -----------| ----------|
 | com-orkut.ungraph.csv         | 117185083                    | 1408738                      | Y                            | 2h 19m 54s on a 2 * 16 N1 core CPU in GCP           |  20 | 2 |
-| twitter_original_edges.csv    | 63555749                     | 92583                     |Y                                |  1h 53m 12s on a 2 * 16 N1 core CPU in GCP          |  22  | 3 |
-| soc-LiveJournal1.csv          | 42851237                     | 1780692                    | Y                              |  1h 12m 32s on a 2 * 16 N1 core CPU in GCP         | 20   | 3|
-| soc-pokec-relationships.csv   | 22301964                     | 664398                    | Y                               |   52min 45s on a 2 * 16 N1 core CPU in GCP         |  23  | 4|
-| musae_ENGB_edges.csv          | 35324                        | 2452                    | Y                                 | 38s on local           | 13| 3|
-| log_normal_100.csv            | 2671                         | 47                     | Y                                  | 27s on local          | 8  | 1 |
+| twitter_original_edges.csv    | 63555749                     | 92583                     |Y                                |  1h 53m 12s on macbook pro M1 32G 8 core          |  22  | 3 |
+| soc-LiveJournal1.csv          | 42851237                     | 1780692                    | Y                              |  1h 12m 32s on macbook pro M1 32G 8 core        | 20   | 3|
+| soc-pokec-relationships.csv   | 22301964                     | 664398                    | Y                               |   52min 45s on macbook pro M1 32G 8 core         |  23  | 4|
+| musae_ENGB_edges.csv          | 35324                        | 2452                    | Y                                 | 38s on macbook pro M1 32G 8 core           | 13| 3|
+| log_normal_100.csv            | 2671                         | 47                     | Y                                  | 27s on macbook pro M1 32G 8 core          | 8  | 1 |

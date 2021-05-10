@@ -3,14 +3,14 @@
 For the final project, you are provided 6 CSV files, each containing an undirected graph, which can be found [here](https://drive.google.com/file/d/1khb-PXodUl82htpyWLMGGNrx-IzC55w8/view?usp=sharing). The files are as follows: 
 
 
-|           File name           |        Number of edges |        Matchings Found       |        Passed Verifier?       |     Time (sec)            | 
-| ------------------------------| -------------------| ---------------------------- | ---------------------------- |----------------------------|
-| com-orkut.ungraph.csv         | 117185083                    | 1408738                      | Y                            | 2h 19m 54s on a 2 * 16 N1 core CPU in GCP           |
-| twitter_original_edges.csv    | 63555749                     | 92583                     |Y                                |  1h 12m 32s on a 2 * 16 N1 core CPU in GCP          |
-| soc-LiveJournal1.csv          | 42851237                     | 1780692                    | Y                              |  43m 52 s on a 2 * 16 N1 core CPU in GCP         |
-| soc-pokec-relationships.csv   | 22301964                     | 664398                    | Y                               |   s on a 2 * 16 N1 core CPU in GCP         |
-| musae_ENGB_edges.csv          | 35324                        | 2452                    | Y                                 | 38s on local           |
-| log_normal_100.csv            | 2671                         | 47                     | Y                                  | 27s on local          |
+|           File name           |        Number of edges |        Matchings Found       |        Passed Verifier?       |     Time             |  Iterations  |  Augmented Iterations |
+| ------------------------------| -------------------| ---------------------------- | ---------------------------- |----------------------------| -----------| ----------|
+| com-orkut.ungraph.csv         | 117185083                    | 1408738                      | Y                            | 2h 19m 54s on a 2 * 16 N1 core CPU in GCP           |  20 | 2 |
+| twitter_original_edges.csv    | 63555749                     | 92583                     |Y                                |  1h 53m 12s on a 2 * 16 N1 core CPU in GCP          |  22  | 3 |
+| soc-LiveJournal1.csv          | 42851237                     | 1780692                    | Y                              |  1h 12m 32s on a 2 * 16 N1 core CPU in GCP         | 20   | 3|
+| soc-pokec-relationships.csv   | 22301964                     | 664398                    | Y                               |   s on a 2 * 16 N1 core CPU in GCP         |  23  | 4|
+| musae_ENGB_edges.csv          | 35324                        | 2452                    | Y                                 | 38s on local           | 13| 23|
+| log_normal_100.csv            | 2671                         | 47                     | Y                                  | 27s on local          | 8  | 1 |
 
 
 ## Deliverables

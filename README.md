@@ -1,29 +1,32 @@
 # Large Scale Data Processing: Final Project
-## Graph matching
-For the final project, you are provided 6 CSV files, each containing an undirected graph, which can be found [here](https://drive.google.com/file/d/1khb-PXodUl82htpyWLMGGNrx-IzC55w8/view?usp=sharing). The files are as follows:  
-
-|           File name           |        Number of edges       |
-| ------------------------------| ---------------------------- |
-| com-orkut.ungraph.csv         | 117185083                    |
-| twitter_original_edges.csv    | 63555749                     |
-| soc-LiveJournal1.csv          | 42851237                     |
-| soc-pokec-relationships.csv   | 22301964                     |
-| musae_ENGB_edges.csv          | 35324                        |
-| log_normal_100.csv            | 2671                         |  
-
-## Final Report
+### By Group 7 - Mokun Li, Xinyu Yao, Jien Li
 
 
-* A table containing the size of the matching you obtained for each test case. The sizes must correspond to the matchings in your output files.
-|           File name           |        Number of edges       |    Size of matching    |    running time     |   
-| ------------------------------| ---------------------------- | ---------------------  |  ----------------   |
-| com-orkut.ungraph.csv         | 117185083                    |  1408738               |  8394s              |
-| twitter_original_edges.csv    | 63555749                     |                        |                     |
-| soc-LiveJournal1.csv          | 42851237                     |                        |                     |
-| soc-pokec-relationships.csv   | 22301964                     |                        |                     |
-| musae_ENGB_edges.csv          | 35324                        |                        |                     |
-| log_normal_100.csv            | 2671                         |                        |                     |
-* An estimate of the amount of computation used for each test case. For example, "the program runs for 15 minutes on a 2x4 N1 core CPU in GCP." If you happen to be executing mulitple algorithms on a test case, report the total running time.
-* Description(s) of your approach(es) for obtaining the matchings. It is possible to use different approaches for different cases. Please describe each of them as well as your general strategy if you were to receive a new test case.
-* Discussion about the advantages of your algorithm(s). For example, does it guarantee a constraint on the number of shuffling rounds (say `O(log log n)` rounds)? Does it give you an approximation guarantee on the quality of the matching? If your algorithm has such a guarantee, please provide proofs or scholarly references as to why they hold in your report.
+## Methods
+Out group is using two-step process to find the matchings in a graph. The first step is the Israeli-Itai algorithm, as discussed in the course, to find a maximal set of matchings in the graph. The second step is a augmentation step that specifically increase the matching size by 1 for every 3-edge augmenting path found.
+
+### Israeli-Itai Algorithm
+The Israeli-Itai Algorithm will find a maximal matching that will have at least 1/2 of number of matching as the maximum matching of the graph. The algorithm is identical as the slide describes and will not be restated here.
+The implementation is composed of 3 aggrefateMesage
+
+### 3-Edge Augmentation
+
+
+
+## Graph matching Results
+
+|           File name           |        Number of edges       |        Matchings Found       |        Passed Verifier?       |     Time (sec)            |
+| ------------------------------| ---------------------------- | ---------------------------- | ---------------------------- |----------------------------|
+| com-orkut.ungraph.csv         | 117185083                    | 1408738                      | Y                            |            |
+| twitter_original_edges.csv    | 63555749                     | 92583                     |Y                                |            |
+| soc-LiveJournal1.csv          | 42851237                     | 1780692                    | Y                              |            |
+| soc-pokec-relationships.csv   | 22301964                     | 664398                    | Y                               |            |
+| musae_ENGB_edges.csv          | 35324                        | 2452                    | Y                                 |            |
+| log_normal_100.csv            | 2671                         | 47                     | Y                                  |27          |
+
+
+
+
+
+
 

@@ -1,3 +1,8 @@
+# Large Scale Data Processing: Final Project
+### By Group 7 - Mokun Li, Xinyu Yao, Jien Li
+
+
+# Methods
 Out group is using two-step process to find the matchings in a graph. The first step is the Israeli-Itai algorithm, as discussed in the course, to find a maximal set of matchings in the graph. The second step is a augmentation step that specifically increase the matching size by 1 for every 3-edge augmenting path found.
 
 ## Israeli-Itai Algorithm
